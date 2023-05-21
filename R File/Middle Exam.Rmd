@@ -1,0 +1,164 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+```{r}
+secret <- function(x){
+s <- sort(x)
+index <- floor(length(x)/2) + 1
+return(c(index, s[index]))
+}
+b<- c(1,2,44,5,66,8,99)
+
+sort(b)
+secret(b)  #中位数位于排序后的第5个数，是44
+index <- secret(b)[1]
+lq <- secret(sort(b)[1:index-1])[2]
+uq <- secret(sort(b)[(index+1):length(x)])[2]
+result <- lq-1.5*(uq-lq)
+lq
+uq
+result
+
+
+```
+
+
+```{r}
+marks <- c(80,60,34,56,70,56,65,95)
+name <- c("John", "Emma", "Peter", "Dave", "Jane", "Rob", "Chris", "Emily")
+gender <- c("M","F","M","M","F","M","M","F")
+unit <- c("CITS4009","CITS1401","CITS1401","CITS4009","CITS4009","CITS4009","CITS1401","CITS1401")
+df <- data.frame(name=name, gender=gender, unit=unit, marks=marks)
+df
+
+ggplot(data=df,mapping=aes(x=unit,y=marks,fill=unit))+geom_boxplot()
+ggplot(df)+geom_boxplot(aes(x=unit,y=marks))
+ggplot(df)+geom_boxplot(mapping=aes(x=unit,y=marks),fill=unit)
+
+a <- subset(df, gender=="M" & marks < 50, select="name")
+a
+
+
+
+boxplot.stats(df$marks)$stats
+
+boxplot.stats(df$marks)$n
+boxplot.stats(df$marks)$out
+ggplot(df) + geom_boxplot(mapping=aes(x=unit, y=marks))
+boxplot(df[df$unit=="CITS1401",]$marks, df[df$unit=="CITS4009",]$marks)
+df$q <- as.factor(df$marks > 50)
+df
+df$qq <- ifelse(df$marks > 50, "TRUE", "FALSE")
+df
+df <- within(df, {pass=NA; pass=marks>50})
+df
+
+df[order(df$unit, -df$marks),]
+aggregate(df$marks, list(df$unit), mean)
+ summary(df)
+levels(as.factor(df))
+```
+
+
+
+
+
+```{r}
+secret <- function(x){
+start <- floor(min(x))
+end <- ceiling(max(x))
+counts <- c()
+for (i in start:end-1){
+counts <- c(counts, length(x[x > i & x <= i+1]))
+}
+return(counts)
+}
+b<- c(1,2,44,5,66,77,8,99)
+secret(b)
+```
+
+```{r}
+mpg
+ggplot(data = mpg,mpping=aes(x=manufacturer,y=..density..))+geom_histogram(binwidth = 1)+geom_density(collor="blue",alpga=0.5)
+```
+```{r}
+myMedian <- function(x){
+  i<- floor(length(x)/2)+1
+  return(c(i,x[i]))
+}
+b<- c(1,2,44,5,66,77,8)
+myMedian(b) 
+
+```
+```{r}
+index <- myMedian(x)[1]
+lq<- myMedian(sort(x)[1:index-1])[2]
+uq<- myMedian(sort(x)[(index+1):length(x)])[2]
+result <- lq-1.5*(uq-lq)
+```
+
+```{r}
+mpg
+mpg[, -which(colnames(mpg)=="displ")]
+qwe <- mpg[which(manufacturer=="audi"&year<2008),]
+qwe
+if(manufacturer=="audi"&year<2008){qw <- mpg}
+qw 
+```
+```{r}
+A <- c(1,2,3,4,5)
+B <- c("i", "e", "c", "f", "c")
+df1 <- data.frame(A=A, B=B)
+df1
+C <- c(1,12,5,2,19)
+B <- c("c","c","j","c","f")
+df2 <- data.frame(C=C, B=B)
+df2
+semi_join(df1, df2)
+left_join(df1, df2)
+```
+```{r}
+price <- c(10,15,12,20)
+product <- c("P1", "P2", "P3", "P4")
+df1 <- data.frame(product=product, pricer=price)
+df1
+vitamin <- c("A","A","B","B","B","C","D")
+product<- c("P1","P2","P1","P2","P4","P5","NA")
+df2 <- data.frame(vitamin=vitamin,product =product)
+df2
+inner_join(df1,df2)
+anti_join(df1,df2)
+full_join(df1,df2)
+semi_join(df1, df2)
+```
+```{r}
+house.address <-c("A","B","C")
+suburb <- c("D","E","F")
+number.persons<- c(500,600,1000)
+df3 <- data.frame(house.addresst=house.address, suburb=suburb,number.persons=number.persons)
+df3
+land.area <- c(2000,3000,4000)
+df4 <- data.frame(suburb=suburb,land.area=land.area)
+df4
+out<- aggregate(df3[,"number.persons"],FUN=(sum,by=df3$suburb))
+df3$population.density <- out$x/land.area
+out <- df3 %>% subset(select="number.persons")%>% aggregate(sum,by=list(df3$suburb))
+df4 <- within(df4,{population.density <- out$number.persons/land.area})
+df4
+```
+
+
+```{r}
+fuc <- function(x,p=50){
+  x <- sort(x)
+  L <- length(x)
+  ind <- ceiling(p*L/100)
+  c(x[ind],ind)
+}
+b<- c(1,2,44,5,66,77,8,99)
+fuc(b)
+```
+

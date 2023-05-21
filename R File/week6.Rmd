@@ -1,0 +1,69 @@
+---
+title: "week6"
+output: html_notebook
+---
+```{r}
+library(dplyr)
+library(magrittr)
+```
+
+merge()
+```{r}
+#创建数据框
+authors <- data.frame(
+surname = c("Tukey", "Venables", "Ripley",
+"Tierney", "Winton"),
+nationality = c("US", "Australia", "NZ", "US", "UK"),
+deceased = c(rep("yes", 2), rep("no", 3)))
+authors
+books <- data.frame(
+name = I(c("Tukey", "Venables", "Tierney",
+"Ripley", "Ripley", "McNeil", "R Core")),
+title = c("Exploratory Data Analysis", "Modern Applied Statistics",
+"LISP-STAT", "Spatial Statistics", "Stochastic Simulation",
+"Interactive Data Analysis", "An Introduction to R"),
+other.author = c(NA, "Ripley", NA, NA, NA, NA, "Venables & Smith"))
+books
+authorN <- within(authors, { name <- surname; rm(surname) })
+authorN
+m1 <- merge(books,authorN)
+m1    #相同的元素保留了，不相同的直接过滤掉   合并相同名字"name"
+m2 <- merge(authorN,books,by.authorN="surname",by.books = "name")
+#直接制定数据框authorN中的surname列和数据框books中的name列合并
+m2
+m3 <- merge(authorN,books,all.x=TRUE)#左合并
+m3
+m4 <- merge(authorN,books,all.y=TRUE)#右合并
+m4
+m5 <- semi_join(books, authorN)
+m5
+```
+
+
+```{r}
+x <- authorN$name
+y <- books$name
+setdiff(x, y) # What are in x but not y?
+
+union(x, y) 
+ # x,y中的所有的name元素包含什么
+intersect(x, y) # Common elements in x and y   两个共同的元素包含什么
+```
+
+```{r}
+library(crayon)
+little_bunny <- function(name) {
+return("Little bunny " %+% name)
+}
+hop <- function(data, through) {
+return(data %+% "\nWent hopping through the " %+% through)
+}
+scoop <- function(data, up) {
+return(data %+% "\nScooping up the " %+% up)
+}
+bop <- function(data, on) {
+return(data %+% "\nAnd bopping them on the " %+% on)
+}
+
+```
+

@@ -1,0 +1,354 @@
+---
+title: "CITS4009 - Project 1"
+author: "Ame Liu(22910358)"
+output: html_notebook
+---
+
+### Introduction
+My data comes from Kaggle. License is Public Domain.https://www.kaggle.com/mysarahmadbhat/120-years-of-olympic-history
+The dataset is historical data from the modern Olympic Games, from Athens in 1896 to Rio de Janeiro in 2016. The data includes the athlete's name, gender, age, height, weight, country, and medal, as well as the project name, sport, game, year, and city, with a unique number for each athlete.
+
+### Data loading, full setup, and overall database data
+
+
+Load libraries:
+```{r}
+library(ggplot2)
+library(dplyr)
+library(gridExtra)
+```
+
+Load the original database:
+```{r}
+Olympic1 <-read.csv("/home/ame/PycharmProjects/Kaggle-Data-Analysis/Datasets/athlete_events.csv")
+Olympic1
+```
+
+
+Analyze the data with str( ):
+```{r}
+
+str(Olympic1)
+```
+There are 27,116 obs and 15 variables consisting of 10 char, 4 int and 1 numeric. Player metrics include "ID," "Name," "Sex," "Age," "Height," "Weight," "Team," "Sport," "Event," "NOC," "Medal" and Olympic metrics include "City," "Season," "Games," "Year".
+
+
+Analyze the data with summary( ):
+```{r}
+summary(Olympic1)
+```
+The amount of data is very large, each player will correspond to different variables, and each Olympic Games will have different variables, choose different indicators will get different data, and the source data is extremely complex.
+
+
+Analyze the data with head( ):
+```{r}
+head(Olympic1)
+```
+
+
+Count the number of NA for each classification:
+```{r}
+apply(is.na(Olympic1), 2, sum)
+```
+"Medal" has a lot of NA we understand, because only the most powerful top three have medals, most people do not have medals, and "Age", "Height", "Weight" may be due to earlier years of data loss or not written, the use of these variables later to pay attention to remove NA values or other.
+
+#### All data transformations are done separately in each Topic, including data cleansing
+
+
+### [1]Topic of Olympic Games
+#### (1).Count the number of people in each Olympic Games for 120 years
+To make a data frame with "Season," "Year," "Game," "Number_of_Participants" to make it easier for us to explore the annual changes in the number of people for each summer and winter Olympics
+
+Data cleaning and creation:
+```{r}
+Olympic3<- Olympic1[!duplicated(Olympic1[,c("Season","Year")]),] 
+Olympic3 <-subset(Olympic3,select=c(Season,Year))                
+Olympic3 <- Olympic3 [order(Olympic3 [,"Year"],decreasing=F),] 
+Olympic4  <- Olympic1[!duplicated(Olympic1[,c("ID","Games")]),]
+Olympic4  <-subset(Olympic4 ,select=c(Year,Games,Season))
+ID_number <- group_by(Olympic4 , Games)  
+History_Number<- summarise(ID_number,Number_of_Participants = n())
+rownames(Olympic3) <-NULL
+rownames(Olympic3) <- rownames(Olympic3, do.NULL = FALSE)
+Olympic3 <- Olympic3 [order(Olympic3 [,"Year"],decreasing=F),] 
+Olympic3 <- arrange(Olympic3,Olympic3[,"Year"],Olympic3[,"Season"])
+History_Number<- cbind(Olympic3,History_Number)
+rownames(History_Number) <-NULL
+rownames(History_Number) <- rownames(History_Number, do.NULL = FALSE)
+#The new data frame is as follows: #
+History_Number    #new data frame #
+ggplot(History_Number,aes(x = Year, y= Number_of_Participants,color=Season))+geom_bar(stat="identity",fill="white")+geom_smooth(method = 'loess',formula='y ~ x',fill="white",alpha=.100)+ggtitle("Number of Olympic Games")
+
+```
+The new data frame details the number of people corresponding to each Olympic Games obtained after the source data is cleaned.
+First of all, the overall number of people in all Winter Olympics and Summer Olympics is on the rise. Secondly, the number of participants in the Summer Olympics is far greater than that of the Winter Olympics. Finally, the data in the middle paragraphs are empty due to the influence of the world war at that time.
+
+#### (2).The number of sports in the Olympic Games
+We need to get all the Sports categories and all theevents specific to each sport.
+Data cleaning and creation:
+```{r}
+#Data cleaning#
+Topic_Sport<-subset(Olympic1,select=c(Sport,Event))       #Extract related categories#
+Topic_Sport<- Topic_Sport[!duplicated(Topic_Sport[,c("Event")]),]    #Removes heavy duplicate data#
+rownames(Topic_Sport) <- NULL
+All_Sport <- Topic_Sport [order(Topic_Sport [,"Sport"],decreasing=F),]   
+rownames(All_Sport) <- NULL
+rownames(All_Sport) <- rownames(All_Sport, do.NULL = FALSE)
+#Olympic Games all Events#   
+All_Sport 
+ID_number <- group_by(Topic_Sport , Sport)
+Topic_Sport2  <- summarise(ID_number,Count = n())
+Topic_Sport2 <- data.frame(Topic_Sport2)
+#The number of Events per Sport#
+Topic_Sport2 
+
+#Drawing#
+bar <- ggplot(data = Topic_Sport) +
+geom_bar(mapping = aes(x = Sport, y=..count..,fill = Sport),show.legend = FALSE,width = 1) +theme(aspect.ratio = 1) +labs(y = NULL)
+p1 <- bar + coord_flip()+ theme(axis.text.x = element_text(angle = 90, hjust = 1, size = 4),axis.text.y = element_text(angle =  0, size = 5.2))
+p2 <- bar + coord_polar()+ theme(axis.text.x = element_text(angle = 0, hjust = 1, size = 2.8),axis.text.y = element_text(angle =  0, size = 0))
+
+p1+theme(aspect.ratio = 1)  #All Events#
+
+#Select the top 10#
+Topic_Sport3 <- Topic_Sport2 [order(Topic_Sport2 [,"Count"],decreasing=T),] 
+Top10_Sport <- Topic_Sport3 [1:10,]
+rownames(Top10_Sport) <-NULL
+rownames(Top10_Sport) <- rownames(Top10_Sport, do.NULL = FALSE)
+Top10_Sport
+#Drawing#
+Top10_Sport <- Top10_Sport [order(Top10_Sport[,"Count"],decreasing=F),] 
+bar2 <- ggplot(Top10_Sport,aes(x = Sport, y= Count,fill=Sport))+geom_bar(stat="identity")+scale_x_discrete(limits=factor(Top10_Sport[,1]))
+p3 <- bar2 +coord_flip()+theme(axis.text.x = element_text(angle = 90, hjust = 1, size = 10),
+        axis.text.y = element_text(angle =  0, size = 10))
+p4 <- bar2 + coord_polar()+theme(axis.text.x = element_text(angle = 0, hjust = 1, size = 0),
+        axis.text.y = element_text(angle =  0, size = 10)) 
+p3  #Top10_Sport #
+p4  #Top10_Sport #
+
+```
+After data cleaning of the source data, we have obtained a large amount of clear new data. The first data frame shows all the Olympic sports; the second data frame shows in detail how many events are included in all Olympic sports; the third data frame shows the top 10 Olympic sports.
+First of all, the first picture vividly shows the number of events corresponding to each Olympic sport. We can see that items such as "Shooting" and "Athletics" are among the best.Secondly, in the second picture, we get the number of items corresponding to the top 10 sports by filtering and sorting the top 10 sports. Finally, the last picture shows their approximate proportions and numbers.
+#### (3).Summer Olympic and Winter Olympic
+Explore the total number of people who have participated in the Summer and Winter Olympics since the 120s
+Data cleaning and creation:
+```{r}
+#Data cleaning#
+Topic_Season<-subset(Olympic1,select=c(ID,Season))       #Select useful columns#
+Topic_Season<- Topic_Season[!duplicated(Topic_Season[,c("ID","Season")]),]   #Removes heavy duplicate data#
+rownames(Topic_Season) <- NULL
+rownames(Topic_Season) <- rownames(Topic_Season, do.NULL = FALSE)      #format#
+ID_number <- group_by(Topic_Season, Season)  
+Summer_Winter <- summarise(ID_number,Count = n())
+Summer_Winter    #Summer and Winter#
+#Drawing#
+bar <- ggplot(data = Topic_Season) +geom_bar(mapping = aes(x = Season, fill = Season),show.legend = FALSE,width = 1)+theme(aspect.ratio = 1)+labs(x = NULL, y = NULL)+ggtitle("Summer Olympic and Winter Olympic")
+p1 <- bar
+p2 <- bar + coord_polar()+theme(axis.text.x = element_text(angle = 0, hjust = 1, size = 6),
+        axis.text.y = element_text(angle =  0, size = 10),
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank())
+grid.arrange(p1, p2, ncol=2)  #Summer and Winter#
+
+ID_number <- group_by(Topic_Season, Season) 
+qwe <- summarise(ID_number,Count= n())
+Label = as.vector(qwe$Season)          #Turn into a vector#
+Label1 = paste(Label, "(", round(qwe$Count/sum(qwe$Count)*100, 3), "%)", sep = "")     #Keep three decimal places on the result#
+p <- ggplot(qwe, aes(x = '', y = Count, fill = Season))+  
+geom_bar(stat = 'identity', width = 1) +          #The noise in the center disappears when the width > 1#
+coord_polar(theta = 'y')+   
+labs(x = "", y = "", title = "") +  
+theme(axis.ticks = element_blank()) +   # Remove the scale of the top left border#
+scale_fill_discrete(breaks = qwe$Season, labels = Label1)+   
+theme(legend.title = element_blank())+  
+theme(axis.text.x = element_blank())+ggtitle("Summer Olympic and Winter Olympic") 
+p     #Proportion#
+```
+By cleaning the data, we have obtained a new table that clearly shows the number of participants in the Summer Olympics and Winter Olympics over the past 120 years.
+First of all, the first picture shows that the number of participants in the Olympics is far more than the Winter Olympics through the comparison of histograms. The last picture shows the proportion of participants in the Summer and Winter Olympics, which accounted for 86% of the total number of participants in the 120 years.
+### [2]Topic of Olympic athletes
+
+#### (1).Gender differences
+Explore the differences in height and weight between Olympic athletes of different genders and the number of men and women participating
+Data cleaning and creation:
+```{r}
+#Data Cleaning#
+#Select useful information in the source data#
+Topic_Sex <-subset(Olympic1,select=c(ID,Height,Weight,Sex))
+Topic_Sex<- Topic_Sex[!duplicated(Topic_Sex[,c("ID")]),]     #Remove repeat contestants#
+rownames(Topic_Sex) <- NULL           #Initialize the data#
+rownames(Topic_Sex) <- rownames(Topic_Sex, do.NULL = FALSE)
+Topic_Sex    #Each player's height, weight, gender#  
+#Drawing#
+Topic_Sex<- na.omit(Topic_Sex)
+bar <- ggplot(data = Topic_Sex) + geom_bar(mapping = aes(x = Sex, fill = Sex),
+show.legend = FALSE,width = 1) + theme(aspect.ratio = 1) + labs(x = NULL, y = NULL)+ggtitle("Gender differences") 
+p1 <- bar + coord_flip()     #Swap coordinate systems#
+p2 <- bar + coord_polar()
+grid.arrange(p1, p2, ncol=2)     #Total number#
+ID_number <- group_by(Topic_Sex,Sex)  
+Data <- summarise(ID_number,Count= n())
+Label = as.vector(Data$Sex) #Turn into a vector#
+Label1 = paste(Label, "(", round(Data$Count/sum(Data$Count)*100, 3), "%)", sep = "")  #Keep three decimal places on the result#
+p3 <- ggplot(Data, aes(x = '', y = Count, fill = Sex))+ 
+geom_bar(stat = 'identity', width = 1) +  #The noise in the center disappears when the width > 1#
+coord_polar(theta = 'y')+   
+labs(x = "", y = "", title = "") +   
+theme(axis.ticks = element_blank()) +     # Remove the scale of the top left border#
+scale_fill_discrete(breaks = Data$Sex, labels = Label1)+   
+theme(legend.title = element_blank())+
+theme(axis.text.x = element_blank())+ggtitle("Gender differences") 
+p3        #The ratio of men to women#
+ggplot(Topic_Sex,aes(x=Height,y=Weight,color=Sex),)+geom_point()+ggtitle("Gender differences")    #Distribution chart#
+ggplot(Topic_Sex,aes(x=Height,y=Weight,color=Sex,fill="white"))+geom_violin(fill="steelblue",alpha=.6)+ggtitle("Gender differences")
+ggplot(Topic_Sex,aes(x=Height,y=Weight,color=Sex,fill="white"))+geom_boxplot(fill="white")+ggtitle("Gender differences")#Distribution chart#
+
+
+```
+We obtained a new data frame by reducing and repeating the source data, which showed in detail all the weight, height and gender information corresponding to each player ID.
+First of all, the first and second pictures show the number and ratio of male and female athletes participating in the Olympic Games for 120 years. We can see that there are far more male athletes than women. Secondly, through the third scatter chart, we found that the overall height and weight of male athletes and female athletes are quite different, which is caused by the human body structure. Finally, through the final violin chart and box chart, we removed many atypical data. We can find that the overall weight of female athletes is around 60kg, while the overall weight of male athletes is around 75kg; the overall height of female athletes is around 170cm, and the overall height of male athletes is around 180cm. about.
+#### (2)Multi-sport athletes
+Are there any athletes who participate in many sports alone?
+Data cleaning and creation:
+```{r}
+#Data Cleaning#
+Topic_SportNumber<-subset(Olympic1,select=c(ID,Sport))
+Topic_SportNumber<- Topic_SportNumber[!duplicated(Topic_SportNumber[,c("ID","Sport")]),]
+row.names(Topic_SportNumber) <- NULL
+rownames(Topic_SportNumber ) <- rownames(Topic_SportNumber , do.NULL = FALSE)
+ID_number <- group_by(Topic_SportNumber, ID)  
+Types1 <- summarise(ID_number,Types = n())
+ID_number <- group_by(Types1 , Types)  
+Types1  <- summarise(ID_number,Count = n())
+Types1 <- data.frame(Types1)
+#Accurate data for Multi-sport athletes #
+Types1     
+#Drawing#
+ggplot(Types1,aes(Types,Count))+geom_bar(stat="identity",fill = "lightblue", colour = "black")+ggtitle("Multi-sport athletes")+geom_text(aes(label = Count), vjust = -0.3, colour = "red", position = position_dodge(.7), size = 4)
+
+```
+By cleaning the data, we have obtained clear data. As shown in the first data box, there are indeed athletes participating in different types of Olympic sports.
+Through the display of the histogram, we found that very few remote mobilizations participated in different types of sports in the Olympic Games, and only 6 people participated in 4 events, which is very rare. It can be seen that athletes who are proficient in many different types of Olympic Games are very rare, and most people only participate in a single category of Olympic sports in their lifetime.
+
+
+#### (3)Retirement_Age-Participations
+Explore the number of times each athlete has participated in the Olympics and the age of retirement over the past 120 years
+Data cleaning and creation:
+```{r}
+#Data Cleaning#
+#Filter the useless variables in this exploration#
+Olympic2 <- Olympic1[!duplicated(Olympic1[,c("ID","Games")]),]
+Olympic2 <- Olympic2[, !colnames(Olympic2) %in% c("Sport","Event","Medal")]
+rownames(Olympic2) <-NULL
+rownames(Olympic2) <- rownames(Olympic2, do.NULL = FALSE)  #The initial line name#
+ID_Age<-subset(Olympic2,select=c(ID,Age,Sex))
+ID_number <- group_by(ID_Age, ID)  
+ID_Age <- summarise(ID_number,Number_of_Participants = n(),Retirement_Age = max(Age))
+ID_Age <- data.frame(ID_Age) 
+row.names(ID_Age) <- NULL
+rownames(ID_Age ) <- rownames(ID_Age , do.NULL = FALSE)
+Sex <- (subset(Olympic2[!duplicated(Olympic2[,c("ID")]),],select=c(Sex)))
+rownames(Sex) <- NULL
+rownames(Sex) <- rownames(Sex, do.NULL = FALSE)
+ID_Age_Sex <- cbind(ID_Age,Sex) 
+ID_Age_Sex <- na.omit(ID_Age_Sex) 
+ID_Age_Sex     #Parameters: Player ID, number of participants, gender#
+#Drawing#
+#The relationship between cumulative participation and retirement age#
+ggplot(ID_Age_Sex,aes(x=Number_of_Participants,y=Retirement_Age,color=Sex))+geom_boxplot()+ggtitle("Retirement_Age-Participations")
+#Retirement age statistics#
+ggplot(ID_Age_Sex, aes(x =Retirement_Age,color=Sex)) +geom_histogram(bins = 500,fill="white")+ggtitle("Retirement_Age-Participations")
+
+```
+After cleaning the huge source data, we have obtained a new data frame, which describes in detail the number of times each athlete participated in the Olympic Games and their retirement age.
+In the first picture, we use box plots to show their median, upper quartile, lower quartile and two marginal values. After excluding many marginal data, we found that most women participated in about 3 times, and men participated in about 7 times, while the retirement age of female athletes and female athletes was mostly around 25 years old. Secondly, the second bar graph shows the overall selection of retirement age for male and female athletes and the overall distribution of the number of participants.
+### [3] Topic of country and medal
+####(1)The country's Olympic medals
+Explore the number of Olympic medals won by countries around the world over the past 120 years
+Data cleaning and creation:
+```{r}
+#Data Cleaning#
+Topic_Country1 <- subset(Olympic1,select=c(NOC,Medal))
+Topic_Country1  <-na.omit(Topic_Country1 )  
+rownames(Topic_Country1) <- NULL        
+rownames(Topic_Country1) <- rownames(Topic_Country1, do.NULL = FALSE)
+ID_number <- group_by(Topic_Country1, NOC)  
+Topic_Country <- summarise(ID_number,All_Medals= n())
+Topic_Country <- data.frame(Topic_Country)
+rownames(Topic_Country) <- NULL              
+rownames(Topic_Country) <- rownames(Topic_Country, do.NULL = FALSE)
+#ranked medals for 120 years#
+Topic_Country 
+Topic_Country <- Topic_Country [order(Topic_Country [,"All_Medals"],decreasing=T),] 
+Top10_Country <- Topic_Country [1:10,]
+rownames(Top10_Country ) <- NULL              #Initialize the data and rearrange the row names in order
+rownames(Top10_Country ) <- rownames(Top10_Country , do.NULL = FALSE)
+#Select the top 10#
+Top10_Country 
+#Drawing#
+Top10_Country  <- Top10_Country  [order(Top10_Country[,"All_Medals"],decreasing=F),] 
+bar <- ggplot(Top10_Country ,aes(x = NOC, y= All_Medals,fill=NOC))+geom_bar(stat="identity")+scale_x_discrete(limits=factor(Top10_Country [,1]))
+p1 <- bar +coord_flip()+theme(axis.text.x = element_text(angle = 90, hjust = 1, size = 10),
+        axis.text.y = element_text(angle =  0, size = 10),
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank())+ggtitle("Top10-Country")
+p2 <- bar + coord_polar()+theme(axis.text.x = element_text(angle = 0, hjust = 1, size = 0),
+        axis.text.y = element_text(angle =  0, size = 10),
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank())+ggtitle("Top10-Country") 
+p1    #Top10-County#
+p2    #Top10-County#
+```
+After data cleaning, in the first data frame, we have obtained the number of medals each country has won in the 120-year history of the Olympic Games. The second data frame shows the top 10 countries that have won Olympic medals.
+According to the ranking of the histogram, we found that the number of gold medals in the United States is extremely high, and the rest of the countries are almost all developed countries. This requires us to explore the strength of the Olympic Games in developed and developing countries.
+####(2)Developed and developing countries
+Explore the differences in the number of medals that developed and developing countries have won at the Olympics over the past 120 years
+Exploring developed and developing countries, it is well known that there are currently USA, CAN, AUS, NZL, GBR, IRL, FRA, NED, BEL, LUX, GER AUT, SUI, NOR, ISL, DEN, SWE, FIN, ITA, ESP, POR, GRE, SLO, CZE, TCH, MLT, CYP, JPN, KOR, SGP, SR Next, we count the percentage of medals won by developed countries as a percentage of the total number of medals.
+Data cleaning and creation:
+```{r}
+#Data Creating and Data Cleaning#
+Developed_Country <- filter(Topic_Country1, NOC == "USA" | NOC == "CAN" | NOC == "AUS"|NOC == "NZL" | NOC == "GBR"|NOC == "IRL" | NOC == "FRA"|NOC == "NED" | NOC == "BEL"|NOC == "LUX" | NOC == "GER"|NOC == "AUT" | NOC == "SUI"|NOC == "NOR" | NOC == "ISL"|NOC == "DEN"| NOC == "SWE"|NOC == "FIN" | NOC == "ITA"|NOC == "ESP" | NOC == "POR"|NOC == "GRE"| NOC == "SLO"|NOC == "CZE"| NOC == "TCH"|NOC == "MLT" |NOC == "CYP"| NOC == "JPN"|NOC == "KOR"| NOC == "SGP"|NOC == "SR" )
+Developing_Country <- filter(Topic_Country1, NOC != "USA" & NOC != "CAN" & NOC != "AUS"& NOC != "NZL" & NOC != "GBR"& NOC != "IRL" & NOC != "FRA"& NOC != "NED" & NOC != "BEL"& NOC != "LUX" & NOC != "GER"& NOC != "AUT" & NOC != "SUI" & NOC != "NOR" & NOC != "ISL"& NOC != "DEN"& NOC != "SWE"& NOC != "FIN" & NOC != "ITA"& NOC != "ESP" & NOC != "POR" & NOC != "GRE"& NOC != "SLO"& NOC != "CZE"& NOC != "TCH"& NOC != "MLT" & NOC != "CYP"& NOC != "JPN"&NOC != "KOR"& NOC != "SGP" &NOC!= "SR")
+Developing_Country$Country_type <- c("Developing")
+Developed_Country$Country_type <-  c("Developed")      
+All <- rbind(Developed_Country,Developing_Country)
+Developed <- filter(Topic_Country, NOC == "USA" | NOC == "CAN" | NOC == "AUS"|NOC == "NZL" | NOC == "GBR"|NOC == "IRL" | NOC == "FRA"|NOC == "NED" | NOC == "BEL"|NOC == "LUX" | NOC == "GER"|NOC == "AUT" | NOC == "SUI"|NOC == "NOR" | NOC == "ISL"|NOC == "DEN"| NOC == "SWE"|NOC == "FIN" | NOC == "ITA"|NOC == "ESP" | NOC == "POR"|NOC == "GRE"| NOC == "SLO"|NOC == "CZE"| NOC == "TCH"|NOC == "MLT" |NOC == "CYP"| NOC == "JPN"|NOC == "KOR"| NOC == "SGP"|NOC == "SR" )
+Developing <- filter(Topic_Country, NOC != "USA" & NOC != "CAN" & NOC != "AUS"& NOC != "NZL" & NOC != "GBR"& NOC != "IRL" & NOC != "FRA"& NOC != "NED" & NOC != "BEL"& NOC != "LUX" & NOC != "GER"& NOC != "AUT" & NOC != "SUI" & NOC != "NOR" & NOC != "ISL"& NOC != "DEN"& NOC != "SWE"& NOC != "FIN" & NOC != "ITA"& NOC != "ESP" & NOC != "POR" & NOC != "GRE"& NOC != "SLO"& NOC != "CZE"& NOC != "TCH"& NOC != "MLT" & NOC != "CYP"& NOC != "JPN"&NOC != "KOR"& NOC != "SGP" &NOC!= "SR")
+Developing$Country_type <- c("Developing")    #Developing countries that have won medals for 120 years#
+rownames(Developed) <- NULL                   #Initialize the data and re-arrange the row names in order#
+rownames(Developed) <- rownames(Developed, do.NULL = FALSE)
+Developed$Country_type <- c("Developed")      #Developed countries that have won medals in 120 years#
+All_Country <- rbind(Developed,Developing)
+  #All countries that have won medals in 120 years# 
+All_Country<- All_Country[order(All_Country[,"All_Medals"],decreasing=T),] 
+rownames(All_Country) <- NULL        #Initialize the data and re-arrange the row names in order#
+rownames(All_Country ) <- rownames(All_Country , do.NULL = FALSE)
+All_Country 
+
+#Drawing#  
+bar <- ggplot(data = All) +geom_bar(mapping = aes(x = Country_type, fill = Country_type,),show.legend = FALSE,width = 1)+theme(aspect.ratio = 1)
+p1 <- bar
+
+Label = as.vector(All_Country $Country_type)         #Turn into a vector#
+Label1 = paste(Label, "(", round(All_Country $All_Medals/sum(All_Country$All_Medals)*490, ), "%)", sep = "")      #Keep three decimal places on the result#
+p2 <- ggplot(All_Country , aes(x = '', y = All_Medals, fill = Country_type))+     #Create an axes#
+geom_bar(stat = 'identity', width = 1) +     #The noise in the center disappears when the width > 1#
+coord_polar(theta = 'y')+                #Fold the bar chart into a pie chart (polar coordinates)#
+labs(x = "", y = "", title = "") +       #Set the label for the horizontal coordinates to empty#
+theme(axis.ticks = element_blank()) +   # Remove the scale of the top left border#
+scale_fill_discrete(breaks = All_Country $Country_type, labels = Label1)+  
+theme(legend.title = element_blank())+  
+theme(axis.text.x = element_blank())
+
+grid.arrange(p1, p2, ncol=2)    #Proportion#
+
+ggplot(All_Country,aes(x=NOC,y=All_Medals,color=Country_type))+geom_point()+theme(axis.text.x = element_text(angle = 0, hjust = 1, size = 0),
+        axis.text.y = element_text(angle =  0, size = 10),)    #Distribution chart#
+```
+After difficult and complex data cleaning, we still obtained the data frame we needed, including the rankings of 149 countries that have won medals in 120 years.
+First of all, in the first picture, we find that 31 developed countries have taken away 69% of the total number of medals. Secondly, the dotted distribution map of national medals in the second picture also shows that most of the developed countries have relatively high rankings in the number of medals. All these show the strong sports strength of developed countries in the Olympic Games.
+
+### Conclusion
+This project includes 3 major themes and 8 specific categories, using 7 different types of statistical charts, including bar chart, curve chart, sector chart, polar chart, scatter chart, violin chart and box chart, a large number of data cleaning, creation, and ideas of exploring big data. The above materials show the great information brought to us by the 120-year history of the Olympic Games.
+
+

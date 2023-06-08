@@ -8,30 +8,40 @@
 My data comes from Kaggle. License is Public Domain.https://www.kaggle.com/mysarahmadbhat/120-years-of-olympic-history
 The dataset is historical data from the modern Olympic Games, from Athens in 1896 to Rio de Janeiro in 2016. The data includes the athlete's name, gender, age, height, weight, country, and medal, as well as the project name, sport, game, year, and city, with a unique number for each athlete.
 ### Data Analysis
+
 **[1] Number of Olympic Games**
 ![img.png](Figures/Number of Olympic Games.png)
+
 **[2] Rank for Sport**
 ![img.png](Figures/Sport.png)
+
 **[3] Sport Count**
 ![img.png](Figures/Sport Count.png)
 ![img.png](Figures/Sport-Count-2.png)
 
 **[4] Summer VS Winter**
+
 ![img.png](Figures/Summer-vs-winter-1.png)
 ![img.png](Figures/summer-vs-winter-2.png)
 
 **[5] Gender differences**
+
 ![img.png](Figures/gender-1.png)
 ![img.png](Figures/gender-2.png)
 ![img.png](R File/gender-3.png)
 ![img.png](Figures/gender-4.png)
 ![img.png](Figures/gender-5.png)
+
 **[6] Multi-sport atheletes**
 ![img.png](Figures/Multi.png)
+
 **[7] Retirement Age**
+
 ![img.png](Figures/retirement-1.png)
 ![img.png](Figures/retirement-2.png)
+
 **[8] Countries**
+
 ![img.png](Figures/country-1.png)
 ![img.png](Figures/country-2.png)
 ![img.png](Figures/copuntry-3.png)
